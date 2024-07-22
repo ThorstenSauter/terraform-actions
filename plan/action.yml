@@ -1,0 +1,101 @@
+﻿name: 'Terraform plan'
+description: >-
+  Runs the Terraform plan command in the given infrastructure directory and displays the plan output as a pull request
+  comment. This includes the installation of the Terraform CLI.
+inputs:
+  environment-name:
+    description: 'The name of the environment to plan.'
+    required: true
+  github-token:
+    description: 'The GitHub token used to create and update the pull request comment.'
+    required: true
+  resource-group:
+    description: 'The name of the resource group containing the storage account for the Terraform backend configuration.'
+    required: true
+  storage-account:
+    description: 'The name of the storage account containing the Terraform backend configuration.'
+    required: true
+  container:
+    description: 'The name of the Blob Storage container containing the Terraform backend configuration.'
+    required: true
+  state-file:
+    description: 'The name of the Terraform state file.'
+    required: true
+  infra-directory:
+    description: 'The path to the Terraform source directory.'
+    required: true
+  terraform-version:
+    description: 'The version of Terraform to install. Defaults to latest.'
+    required: false
+    default: 'latest'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ inputs.terraform-version }}
+    - name: Terraform init
+      id: init
+      shell: bash
+      working-directory: ${{ inputs.infra-directory }}
+      run: |
+        terraform init \
+        -backend-config="resource_group_name=${{ inputs.resource-group }}" \
+        -backend-config="storage_account_name=${{ inputs.storage-account }}" \
+        -backend-config="container_name=${{ inputs.container }}" \
+        -backend-config="key=${{ inputs.state-file }}"
+    - name: Terraform plan
+      id: plan
+      shell: bash
+      working-directory: ${{ inputs.infra-directory }}
+      continue-on-error: true
+      run: terraform plan -no-color -input=false
+    - name: Create or update PR comment
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
+      env:
+        PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          })
+          const botComment = comments.find(comment => {
+            return comment.user.type === 'Bot' && comment.body.includes('${{ inputs.environment-name }} environment')
+          })
+
+          const output = `### ${{ inputs.environment-name }} environment
+          #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+          <details><summary>Show Plan</summary>
+
+          \`\`\`\n
+          ${process.env.PLAN}
+          \`\`\`
+
+          </details>`;
+
+          if (botComment) {
+            github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body: output
+            })
+          } else {
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+          }
+    - name: Terraform plan status
+      if: steps.plan.outcome == 'failure'
+      shell: bash
+      run: exit 1

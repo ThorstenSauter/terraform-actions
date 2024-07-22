@@ -1,0 +1,42 @@
+﻿name: 'Terraform init'
+description: >-
+  Runs the Terraform init command in the given infrastructure directory. This includes the installation of the Terraform CLI.
+inputs:
+  resource-group:
+    description: 'The name of the resource group containing the storage account for the Terraform backend configuration.'
+    required: true
+  storage-account:
+    description: 'The name of the storage account containing the Terraform backend configuration.'
+    required: true
+  container:
+    description: 'The name of the Blob Storage container containing the Terraform backend configuration.'
+    required: true
+  state-file:
+    description: 'The name of the Terraform state file.'
+    required: true
+  infra-directory:
+    description: 'The path to the Terraform source directory.'
+    required: true
+  terraform-version:
+    description: 'The version of Terraform to install. Defaults to latest.'
+    required: false
+    default: 'latest'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ inputs.terraform-version }}
+        terraform_wrapper: false
+    - name: Terraform init
+      id: init
+      shell: bash
+      working-directory: ${{ inputs.infra-directory }}
+      run: |
+        terraform init \
+        -backend-config="resource_group_name=${{ inputs.resource-group }}" \
+        -backend-config="storage_account_name=${{ inputs.storage-account }}" \
+        -backend-config="container_name=${{ inputs.container }}" \
+        -backend-config="key=${{ inputs.state-file }}"

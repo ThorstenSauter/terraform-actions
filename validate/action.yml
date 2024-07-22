@@ -1,0 +1,98 @@
+﻿name: 'Terraform validate'
+description: >-
+  Validates the Terraform configuration in the given infrastructure directory and displays the validation result as a
+  pull request comment. This includes the installation of the Terraform CLI, TFLint and tfsec.
+inputs:
+  github-token:
+    description: 'The GitHub token used to create and update the pull request comment.'
+    required: true
+  infra-directory:
+    description: 'The path to the Terraform source directory.'
+    required: true
+  terraform-version:
+    description: 'The version of Terraform to install. Defaults to latest.'
+    required: false
+    default: 'latest'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ inputs.terraform-version }}
+        terraform_wrapper: false
+    - name: Terraform formatting check
+      id: format
+      shell: bash
+      working-directory: ${{ inputs.infra-directory }}
+      continue-on-error: true
+      run: terraform fmt -check -recursive
+    - name: Setup TFLint
+      uses: terraform-linters/setup-tflint@v4
+      continue-on-error: true
+      with:
+        tflint_version: latest
+    - name: Init TFLint
+      shell: bash
+      working-directory: ${{ inputs.infra-directory }}
+      run: tflint --init
+    - name: Run TFLint
+      id: tflint
+      shell: bash
+      working-directory: ${{ inputs.infra-directory }}
+      continue-on-error: true
+      run: tflint --no-color -f compact
+    - name: Run tfsec
+      uses: aquasecurity/tfsec-pr-commenter-action@v1.3.1
+      with:
+        working_directory: ${{ inputs.infra-directory }}
+        tfsec_args: --no-color
+        github_token: ${{ inputs.github-token }}
+    - name: Terraform Validate
+      id: validate
+      shell: bash
+      working-directory: ${{ inputs.infra-directory }}
+      continue-on-error: true
+      run: terraform validate -no-color
+    - name: Create or update PR comment
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
+      env:
+        PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          })
+          const botComment = comments.find(comment => {
+            return comment.user.type === 'Bot' && comment.body.includes('Terraform validation')
+          })
+
+          const output = `### Terraform validation
+          #### Terraform format 🖌\`${{ steps.format.outcome }}\`
+          #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+          #### TFLint 👓\`${{ steps.tflint.outcome }}\``;
+
+          if (botComment) {
+            github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body: output
+            })
+          } else {
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+          }
+    - name: Validation status
+      if: steps.format.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.tflint.outcome == 'failure'
+      shell: bash
+      run: exit 1
