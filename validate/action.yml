@@ -1,7 +1,7 @@
 ﻿name: 'Terraform validate'
 description: >-
   Validates the Terraform configuration in the given infrastructure directory and displays the validation result as a
-  pull request comment. This includes the installation of the Terraform CLI, TFLint and tfsec.
+  pull request comment. This includes the installation of the Terraform CLI, TFLint and trivvy.
 inputs:
   github-token:
     description: 'The GitHub token used to create and update the pull request comment.'
@@ -43,12 +43,30 @@ runs:
       working-directory: ${{ inputs.infra-directory }}
       continue-on-error: true
       run: tflint --no-color -f compact
-    - name: Run tfsec
-      uses: aquasecurity/tfsec-pr-commenter-action@v1.3.1
+    - name: Run Trivy scanner
+      uses: aquasecurity/trivy-action@0.24.0
+      id: trivy
+      continue-on-error: true
       with:
-        working_directory: ${{ inputs.infra-directory }}
-        tfsec_args: --no-color
-        github_token: ${{ inputs.github-token }}
+        scan-type: config
+        scan-ref: ${{ inputs.infra-directory }}
+        hide-progress: true
+        exit-code: 1
+        output: trivy.txt
+    - name: Publish Trivy Output to Summary
+      shell: bash
+      run: |
+        if [[ -s trivy.txt ]]; then
+          {
+            echo "### Trivy scan output"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```terraform'
+            cat trivy.txt
+            echo '```'
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
+        fi
     - name: Terraform Validate
       id: validate
       shell: bash
@@ -75,6 +93,7 @@ runs:
           const output = `### Terraform validation
           #### Terraform format 🖌\`${{ steps.format.outcome }}\`
           #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+          #### Trivy scan 🔎\`${{ steps.trivy.outcome }}\`
           #### TFLint 👓\`${{ steps.tflint.outcome }}\``;
 
           if (botComment) {
@@ -93,6 +112,6 @@ runs:
             })
           }
     - name: Validation status
-      if: steps.format.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.tflint.outcome == 'failure'
+      if: steps.format.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.tflint.outcome == 'failure' || steps.trivy.outcome == 'failure'
       shell: bash
       run: exit 1
