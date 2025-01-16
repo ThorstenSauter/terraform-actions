@@ -21,6 +21,13 @@ inputs:
     description: 'The version of Terraform to install. Defaults to latest.'
     required: false
     default: 'latest'
+  lock-timeout:
+    description: >-
+      The duration Terraform will wait to acquire a state lock during an init.
+      The format has to follow the Terraform CLIs requirement of a number followed by a unit.
+      Defaults to 5m.
+    required: false
+    default: '5m'
 
 runs:
   using: 'composite'
@@ -39,4 +46,5 @@ runs:
         -backend-config="resource_group_name=${{ inputs.resource-group }}" \
         -backend-config="storage_account_name=${{ inputs.storage-account }}" \
         -backend-config="container_name=${{ inputs.container }}" \
-        -backend-config="key=${{ inputs.state-file }}"
+        -backend-config="key=${{ inputs.state-file }}" \
+        -lock-timeout=${{ inputs.lock-timeout }}

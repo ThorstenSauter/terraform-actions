@@ -28,6 +28,13 @@ inputs:
     description: 'The version of Terraform to install. Defaults to latest.'
     required: false
     default: 'latest'
+  lock-timeout:
+    description: >-
+      The duration Terraform will wait to acquire a state lock during an init or plan.
+      The format has to follow the Terraform CLIs requirement of a number followed by a unit.
+      Defaults to 5m.
+    required: false
+    default: '5m'
 
 runs:
   using: 'composite'
@@ -45,13 +52,14 @@ runs:
         -backend-config="resource_group_name=${{ inputs.resource-group }}" \
         -backend-config="storage_account_name=${{ inputs.storage-account }}" \
         -backend-config="container_name=${{ inputs.container }}" \
-        -backend-config="key=${{ inputs.state-file }}"
+        -backend-config="key=${{ inputs.state-file }}" \
+        -lock-timeout=${{ inputs.lock-timeout }}
     - name: Terraform plan
       id: plan
       shell: bash
       working-directory: ${{ inputs.infra-directory }}
       continue-on-error: true
-      run: terraform plan -no-color -input=false
+      run: terraform plan -no-color -input=false -lock-timeout=${{ inputs.lock-timeout }}
     - name: Create or update PR comment
       uses: actions/github-script@v7
       if: github.event_name == 'pull_request'
