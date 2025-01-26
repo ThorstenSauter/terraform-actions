@@ -9,6 +9,10 @@ inputs:
   infra-directory:
     description: 'The path to the Terraform source directory.'
     required: true
+  skip-trivy:
+    description: 'Skip the trivy scan. Defaults to false.'
+    required: false
+    default: 'false'
   terraform-version:
     description: 'The version of Terraform to install. Defaults to latest.'
     required: false
@@ -45,6 +49,7 @@ runs:
       run: tflint --no-color -f compact
     - name: Run Trivy scanner
       uses: aquasecurity/trivy-action@0.29.0
+      if: ${{ inputs.skip-trivy != 'false' }}
       id: trivy
       continue-on-error: true
       with:
@@ -54,6 +59,7 @@ runs:
         exit-code: 1
         output: trivy.txt
     - name: Publish Trivy Output to Summary
+      if: ${{ inputs.skip-trivy != 'false' }}
       shell: bash
       run: |
         if [[ -s trivy.txt ]]; then
@@ -93,7 +99,7 @@ runs:
           const output = `### Terraform validation
           #### Terraform format 🖌\`${{ steps.format.outcome }}\`
           #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-          #### Trivy scan 🔎\`${{ steps.trivy.outcome }}\`
+          #### Trivy scan 🔎\`${{ steps.trivy.outcome || 'skipped' }}\`
           #### TFLint 👓\`${{ steps.tflint.outcome }}\``;
 
           if (botComment) {
