@@ -49,7 +49,7 @@ runs:
       run: tflint --no-color -f compact
     - name: Run Trivy scanner
       uses: aquasecurity/trivy-action@0.29.0
-      if: ${{ inputs.skip-trivy != 'false' }}
+      if: ${{ inputs.skip-trivy == 'false' }}
       id: trivy
       continue-on-error: true
       with:
@@ -59,7 +59,7 @@ runs:
         exit-code: 1
         output: trivy.txt
     - name: Publish Trivy Output to Summary
-      if: ${{ inputs.skip-trivy != 'false' }}
+      if: ${{ inputs.skip-trivy == 'false' }}
       shell: bash
       run: |
         if [[ -s trivy.txt ]]; then
