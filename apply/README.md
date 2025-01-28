@@ -33,7 +33,7 @@ jobs:
       ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       ARM_USE_AZUREAD: true
       ARM_USE_OIDC: true
-      TERRAFORM_VERSION: '~> 1.9.0'
+      TERRAFORM_VERSION: '~> 1.10.0'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

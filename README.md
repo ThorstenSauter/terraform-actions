@@ -7,10 +7,10 @@ This repository contains common Terraform GitHub Actions to be reused across `Th
 All the included actions assume a Terraform backend of type `azurerm`, meaning the Terraform state file is being stored
 in an Azure Blob Storage container.
 
-They also assume that for actions interacting with the Terraform
+They also assume that for GitHub Actions interacting with the Terraform
 state [OIDC federation between GitHub Actions and Microsoft Entra ID](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure)
-will be used to authenticate to the storage backend. This requires a few environment variables to be set up before the
-actions are used:
+will be used to authenticate to the storage backend.
+This requires a few environment variables to be set up before the actions are used:
 
 - `ARM_CLIENT_ID=<client id of the service principal or managed identity>`
 - `ARM_SUBSCRIPTION_ID=<id of the Azure subscription>`

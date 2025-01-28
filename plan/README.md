@@ -3,16 +3,7 @@
 ## Behavior
 
 This action installs the Terraform CLI with either the given or the `latest` version by default. It then executes the
-`apply` command in the given infrastructure directory:
-
-- File formatting using `terraform fmt`
-- Validation using `terraform validate`
-- Linting using `TFLint`
-- Security using `tfsec`
-
-If any of the steps fail, the entire action fails. If the action is run in a pull request, a comment displaying the
-validation
-result will be created or updated.
+`plan` command in the given infrastructure directory.
 
 ## Example usage
 
