@@ -25,9 +25,9 @@ inputs:
     description: >-
       The duration Terraform will wait to acquire a state lock during an init or apply.
       The format has to follow the Terraform CLIs requirement of a number followed by a unit.
-      Defaults to 5m.
+      Defaults to 10m.
     required: false
-    default: '5m'
+    default: '10m'
 
 runs:
   using: 'composite'
@@ -39,6 +39,8 @@ runs:
         terraform_wrapper: false
     - name: Terraform init
       id: init
+      env:
+        TF_IN_AUTOMATION: true
       shell: bash
       working-directory: ${{ inputs.infra-directory }}
       run: |
@@ -47,9 +49,12 @@ runs:
         -backend-config="storage_account_name=${{ inputs.storage-account }}" \
         -backend-config="container_name=${{ inputs.container }}" \
         -backend-config="key=${{ inputs.state-file }}" \
+        -input=false \
         -lock-timeout=${{ inputs.lock-timeout }}
     - name: Terraform Apply
       id: apply
+      env:
+        TF_IN_AUTOMATION: true
       shell: bash
       working-directory: ${{ inputs.infra-directory }}
       run: terraform apply -auto-approve -input=false -lock-timeout=${{ inputs.lock-timeout }}
