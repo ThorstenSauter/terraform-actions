@@ -50,7 +50,7 @@ runs:
       continue-on-error: true
       run: tflint --no-color -f compact
     - name: Run Trivy scanner
-      uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # 0.34.1
+      uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478 # 0.34.2
       if: ${{ inputs.skip-trivy == 'false' }}
       id: trivy
       continue-on-error: true
