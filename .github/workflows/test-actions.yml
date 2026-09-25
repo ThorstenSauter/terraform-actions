@@ -1,0 +1,66 @@
+name: Test actions
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  BACKEND_ARGS_UNUSED: 'The fixture has no backend block, so the azurerm backend config is ignored and local state is used.'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./validate
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          infra-directory: test-fixture
+
+  plan:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - environment: Small
+            pet-count: 2
+          - environment: Large
+            pet-count: 700
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./plan
+        env:
+          TF_VAR_pet_count: ${{ matrix.pet-count }}
+        with:
+          environment-name: ${{ matrix.environment }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          infra-directory: test-fixture
+          resource-group: unused-rg
+          storage-account: unusedsa
+          container: unused
+          state-file: test.tfstate
+
+  apply-and-init:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./apply
+        with:
+          infra-directory: test-fixture
+          resource-group: unused-rg
+          storage-account: unusedsa
+          container: unused
+          state-file: test.tfstate
+      - uses: ./init
+        with:
+          infra-directory: test-fixture
+          resource-group: unused-rg
+          storage-account: unusedsa
+          container: unused
+          state-file: test.tfstate
+      - name: Read output after init
+        working-directory: test-fixture
+        run: terraform output -json pet_names
