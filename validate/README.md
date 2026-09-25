@@ -6,7 +6,8 @@ This action installs the Terraform CLI with either the given or the `latest` ver
 following items for the Terraform configuration files in the given infrastructure directory:
 
 - File formatting using `terraform fmt`
-- Validation using `terraform validate`
+- Validation using `terraform validate` (preceded by `terraform init -backend=false`, so no backend credentials are
+  required)
 - Linting using `TFLint`
 - Security using `trivy` (can be skipped by setting `skip-trivy` to `true`)
 
@@ -22,9 +23,13 @@ validation result will be created or updated.
 name: Terraform validate
 
 on:
-  pull-request:
+  pull_request:
     branches:
       - main
+
+permissions:
+  contents: read
+  pull-requests: write # Required for pull request comment
 
 jobs:
   validate:

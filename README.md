@@ -34,7 +34,7 @@ will make the value available to the actions.
 name: Terraform plan
 
 on:
-  pull-request:
+  pull_request:
     branches:
       - main
 

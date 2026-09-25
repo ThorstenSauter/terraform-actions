@@ -11,7 +11,7 @@ This action installs the Terraform CLI with either the given or the `latest` ver
 name: Terraform plan
 
 on:
-  pull-request:
+  pull_request:
     branches:
       - main
 
