@@ -47,61 +47,78 @@ runs:
       id: init
       env:
         TF_IN_AUTOMATION: true
+        BACKEND_RESOURCE_GROUP: ${{ inputs.resource-group }}
+        BACKEND_STORAGE_ACCOUNT: ${{ inputs.storage-account }}
+        BACKEND_CONTAINER: ${{ inputs.container }}
+        BACKEND_STATE_FILE: ${{ inputs.state-file }}
+        LOCK_TIMEOUT: ${{ inputs.lock-timeout }}
       shell: bash
       working-directory: ${{ inputs.infra-directory }}
       run: |
         terraform init \
-        -backend-config="resource_group_name=${{ inputs.resource-group }}" \
-        -backend-config="storage_account_name=${{ inputs.storage-account }}" \
-        -backend-config="container_name=${{ inputs.container }}" \
-        -backend-config="key=${{ inputs.state-file }}" \
+        -backend-config="resource_group_name=$BACKEND_RESOURCE_GROUP" \
+        -backend-config="storage_account_name=$BACKEND_STORAGE_ACCOUNT" \
+        -backend-config="container_name=$BACKEND_CONTAINER" \
+        -backend-config="key=$BACKEND_STATE_FILE" \
         -input=false \
-        -lock-timeout=${{ inputs.lock-timeout }}
+        -lock-timeout="$LOCK_TIMEOUT"
     - name: Terraform plan
       id: plan
       env:
         TF_IN_AUTOMATION: true
+        LOCK_TIMEOUT: ${{ inputs.lock-timeout }}
       shell: bash
       working-directory: ${{ inputs.infra-directory }}
       continue-on-error: true
-      run: terraform plan -no-color -input=false -lock-timeout=${{ inputs.lock-timeout }}
+      run: terraform plan -no-color -input=false -lock-timeout="$LOCK_TIMEOUT"
     - name: Create or update PR comment
       uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
       if: github.event_name == 'pull_request'
       env:
-        PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        ENVIRONMENT_NAME: ${{ inputs.environment-name }}
+        PLAN: ${{ steps.plan.outputs.stdout }}
+        PLAN_OUTCOME: ${{ steps.plan.outcome }}
       with:
         github-token: ${{ inputs.github-token }}
         script: |
-          const { data: comments } = await github.rest.issues.listComments({
+          const heading = `### ${process.env.ENVIRONMENT_NAME} environment`;
+          const comments = await github.paginate(github.rest.issues.listComments, {
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: context.issue.number,
           })
           const botComment = comments.find(comment => {
-            return comment.user.type === 'Bot' && comment.body.includes('${{ inputs.environment-name }} environment')
+            return comment.user.type === 'Bot' && comment.body.includes(heading)
           })
 
-          const output = `### ${{ inputs.environment-name }} environment
-          #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+          // GitHub rejects comment bodies longer than 65536 characters. Keep the end of the plan,
+          // which contains the summary of changes.
+          const maxPlanLength = 60000;
+          let plan = process.env.PLAN;
+          if (plan.length > maxPlanLength) {
+            plan = `... (truncated, see the workflow run log for the full plan)\n${plan.slice(-maxPlanLength)}`;
+          }
+
+          const output = `${heading}
+          #### Terraform Plan 📖\`${process.env.PLAN_OUTCOME}\`
 
           <details><summary>Show Plan</summary>
 
-          \`\`\`\n
-          ${process.env.PLAN}
+          \`\`\`terraform
+          ${plan}
           \`\`\`
 
           </details>`;
 
           if (botComment) {
-            github.rest.issues.updateComment({
+            await github.rest.issues.updateComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               comment_id: botComment.id,
               body: output
             })
           } else {
-            github.rest.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,

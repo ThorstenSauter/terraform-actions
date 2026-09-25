@@ -40,6 +40,9 @@ runs:
       with:
         tflint_version: latest
     - name: Init TFLint
+      env:
+        # Authenticates plugin downloads from GitHub to avoid API rate limits
+        GITHUB_TOKEN: ${{ inputs.github-token }}
       shell: bash
       working-directory: ${{ inputs.infra-directory }}
       run: tflint --init
@@ -82,16 +85,17 @@ runs:
       shell: bash
       working-directory: ${{ inputs.infra-directory }}
       continue-on-error: true
-      run: terraform validate -no-color
+      # Providers and modules must be installed for validation; the backend is not needed
+      run: |
+        terraform init -backend=false -input=false -no-color
+        terraform validate -no-color
     - name: Create or update PR comment
       uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
       if: github.event_name == 'pull_request'
-      env:
-        PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
       with:
         github-token: ${{ inputs.github-token }}
         script: |
-          const { data: comments } = await github.rest.issues.listComments({
+          const comments = await github.paginate(github.rest.issues.listComments, {
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: context.issue.number,
@@ -107,14 +111,14 @@ runs:
           #### TFLint 👓\`${{ steps.tflint.outcome }}\``;
 
           if (botComment) {
-            github.rest.issues.updateComment({
+            await github.rest.issues.updateComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               comment_id: botComment.id,
               body: output
             })
           } else {
-            github.rest.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,

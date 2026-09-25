@@ -41,20 +41,26 @@ runs:
       id: init
       env:
         TF_IN_AUTOMATION: true
+        BACKEND_RESOURCE_GROUP: ${{ inputs.resource-group }}
+        BACKEND_STORAGE_ACCOUNT: ${{ inputs.storage-account }}
+        BACKEND_CONTAINER: ${{ inputs.container }}
+        BACKEND_STATE_FILE: ${{ inputs.state-file }}
+        LOCK_TIMEOUT: ${{ inputs.lock-timeout }}
       shell: bash
       working-directory: ${{ inputs.infra-directory }}
       run: |
         terraform init \
-        -backend-config="resource_group_name=${{ inputs.resource-group }}" \
-        -backend-config="storage_account_name=${{ inputs.storage-account }}" \
-        -backend-config="container_name=${{ inputs.container }}" \
-        -backend-config="key=${{ inputs.state-file }}" \
+        -backend-config="resource_group_name=$BACKEND_RESOURCE_GROUP" \
+        -backend-config="storage_account_name=$BACKEND_STORAGE_ACCOUNT" \
+        -backend-config="container_name=$BACKEND_CONTAINER" \
+        -backend-config="key=$BACKEND_STATE_FILE" \
         -input=false \
-        -lock-timeout=${{ inputs.lock-timeout }}
+        -lock-timeout="$LOCK_TIMEOUT"
     - name: Terraform Apply
       id: apply
       env:
         TF_IN_AUTOMATION: true
+        LOCK_TIMEOUT: ${{ inputs.lock-timeout }}
       shell: bash
       working-directory: ${{ inputs.infra-directory }}
-      run: terraform apply -auto-approve -input=false -lock-timeout=${{ inputs.lock-timeout }}
+      run: terraform apply -auto-approve -input=false -lock-timeout="$LOCK_TIMEOUT"

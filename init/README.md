@@ -1,4 +1,4 @@
-﻿# Apply
+﻿# Init
 
 ## Behavior
 
@@ -14,7 +14,7 @@ This action installs the Terraform CLI with either the given or the `latest` ver
 name: Retrieve Terraform output
 
 on:
-  pull-request:
+  pull_request:
     branches:
       - main
 
@@ -47,11 +47,11 @@ jobs:
           container: ${{ vars.TF_BACKEND_STATE_CONTAINER_NAME }}
           state-file: ${{ vars.TF_BACKEND_STATE_FILE_NAME }}
       - name: Terraform apply refresh only
-        working-directory: ${{ vars.TF_WORKING_DIRECTORY }}
+        working-directory: ${{ vars.INFRA_DIRECTORY }}
         run: terraform apply -refresh-only -auto-approve -input=false
       - name: Retrieve deployment token
         id: token-retrieval
-        working-directory: ${{ vars.TF_WORKING_DIRECTORY }}
+        working-directory: ${{ vars.INFRA_DIRECTORY }}
         run: |
           token=$(terraform output -raw deployment_token)
           echo "::add-mask::$token"

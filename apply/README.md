@@ -14,7 +14,7 @@ This action installs the Terraform CLI with either the given or the `latest` ver
 name: Terraform apply
 
 on:
-  pull-request:
+  push:
     branches:
       - main
 
