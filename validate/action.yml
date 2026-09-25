@@ -39,19 +39,19 @@ runs:
       continue-on-error: true
       with:
         tflint_version: latest
-    - name: Init TFLint
+    # Init and run share one step so that any TFLint failure (including a failed setup) is reported via the
+    # tflint outcome in the PR comment instead of aborting the action.
+    - name: Run TFLint
+      id: tflint
       env:
         # Authenticates plugin downloads from GitHub to avoid API rate limits
         GITHUB_TOKEN: ${{ inputs.github-token }}
       shell: bash
       working-directory: ${{ inputs.infra-directory }}
-      run: tflint --init
-    - name: Run TFLint
-      id: tflint
-      shell: bash
-      working-directory: ${{ inputs.infra-directory }}
       continue-on-error: true
-      run: tflint --no-color -f compact
+      run: |
+        tflint --init
+        tflint --no-color -f compact
     - name: Run Trivy scanner
       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       if: ${{ inputs.skip-trivy == 'false' }}
