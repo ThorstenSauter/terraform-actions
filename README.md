@@ -73,9 +73,11 @@ jobs:
 
 ## Actions
 
-The repository currently contains four actions.
+The repository currently contains five actions.
 
 - [Init](./init) `ThorstenSauter/terraform-actions/init@v1`
 - [Validate](./validate) `ThorstenSauter/terraform-actions/validate@v1`
 - [Plan](./plan) `ThorstenSauter/terraform-actions/plan@v1`
+- [Plan workspaces](./plan-workspaces) `ThorstenSauter/terraform-actions/plan-workspaces@v1`: plans several workspaces
+  in one job
 - [Apply](./apply) `ThorstenSauter/terraform-actions/apply@v1`

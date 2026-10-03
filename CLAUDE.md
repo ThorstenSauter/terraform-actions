@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this repo is
 
 A set of reusable **composite** GitHub Actions for Terraform, consumed by other repos as
-`ThorstenSauter/terraform-actions/<action>@v1`. Each top-level directory (`init/`, `validate/`, `plan/`, `apply/`) is one
+`ThorstenSauter/terraform-actions/<action>@v1`. Each top-level directory (`init/`, `validate/`, `plan/`, `plan-workspaces/`, `apply/`) is one
 action: an `action.yml` plus a `README.md` with usage docs. There is no build, test suite, or CI workflow in this repo;
 changes are verified by running the actions from a consuming repository.
 
@@ -26,6 +26,12 @@ changes are verified by running the actions from a consuming repository.
   to be applied to all three.
 - `plan/` is the only action that leaves the `setup-terraform` wrapper enabled (others set `terraform_wrapper: false`),
   because it reads `steps.plan.outputs.stdout` to embed the plan in a PR comment.
+- `plan-workspaces/` plans several workspaces in one job: a `workspaces` input with one
+  `<directory> <state-file> <environment-name>` line each replaces `infra-directory`/`state-file`/`environment-name`.
+  It runs the inits one after another, sharing a `TF_PLUGIN_CACHE_DIR` (not safe for concurrent writes), then the plans
+  as background shell processes with output buffered to files under `$RUNNER_TEMP`. Its init flags mirror the other
+  actions' init step, and its comments use the same `### <environment-name> environment` heading as `plan/`, matched on
+  the whole first line; keep both in sync with `plan/`.
 - `validate/` and `plan/` post/update a single bot PR comment via `actions/github-script` (only on `pull_request`
   events). The existing comment is located by matching a marker string in its body — `Terraform validation` for
   validate, `<environment-name> environment` for plan — so changing those headings breaks comment de-duplication.
