@@ -48,14 +48,14 @@ consuming repository.
 
 - Never interpolate `${{ inputs.* }}` or step outputs directly into `run:` scripts or `github-script` code; map them to
   `env:` entries and reference `$VAR` / `process.env.VAR` instead.
-
-## Conventions
-
 - Third-party actions are pinned to full commit SHAs with a trailing `# vX.Y.Z` comment. Renovate
   (`.github/renovate.json`, extending `ThorstenSauter/renovate-config`) updates these — keep the same format so it keeps
   working.
 - Commit messages follow Conventional Commits (`feat:`, `fix:`, `chore(deps):`, `chore(docs):`).
-- Releases are semver tags (`v1.x.y`) plus a moving major tag `v1` that consumers reference.
+- Releases are published manually as GitHub releases with `v1.x.y` tags. `.github/workflows/release.yml` then moves
+  the major tag `v1` that consumers reference to the release, unless it's a prerelease or not the highest release in that
+  major version. The "Versions" tag ruleset protects `vX.Y.Z` tags; the "Major version tags" ruleset lets the workflow
+  move `v1` but blocks deleting it. A new major version needs adding to both rulesets.
 - When adding/changing inputs, update the action's `README.md` (and the root `README.md` example if relevant).
 - YAML/JSON/Markdown use 2-space indent (`.editorconfig`); `.yml`/`.md` files use LF line endings (`.gitattributes`).
   Existing `action.yml`/`README.md` files start with a UTF-8 BOM.
