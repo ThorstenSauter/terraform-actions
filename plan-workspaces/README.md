@@ -2,8 +2,10 @@
 
 ## Behavior
 
-This action installs the Terraform CLI with either the given or the `latest` version by default. It then executes the
-`plan` command for each of the given workspaces and posts one pull request comment per workspace, the same comment the
+This action installs the Terraform CLI in the version given by the `terraform-version` input. Without it, the version
+in a `.terraform-version` file at the repository root is used, falling back to `latest` if there is none.
+
+It then executes the `plan` command for each of the given workspaces and posts one pull request comment per workspace, the same comment the
 [Plan](../plan) action posts.
 
 It is meant for repositories that split their infrastructure into several workspaces sharing one backend and one set of
