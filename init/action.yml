@@ -1,4 +1,4 @@
-﻿name: 'Terraform init'
+name: 'Terraform init'
 description: >-
   Runs the Terraform init command in the given infrastructure directory. This includes the installation of the Terraform CLI.
 inputs:

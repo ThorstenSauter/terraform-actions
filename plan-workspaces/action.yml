@@ -1,4 +1,4 @@
-﻿name: 'Terraform plan workspaces'
+name: 'Terraform plan workspaces'
 description: >-
   Runs the Terraform plan command for several workspaces in one job and displays each plan as a pull request comment.
   The workspaces are initialised one after another, sharing one provider download, and planned in parallel. This

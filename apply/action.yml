@@ -1,4 +1,4 @@
-﻿name: 'Terraform apply'
+name: 'Terraform apply'
 description: >-
   Runs the Terraform apply command in the given infrastructure directory. This includes the installation of the Terraform CLI.
 inputs:

@@ -1,4 +1,4 @@
-﻿name: 'Terraform validate'
+name: 'Terraform validate'
 description: >-
   Validates the Terraform configuration in the given infrastructure directory and displays the validation result as a
   pull request comment. This includes the installation of the Terraform CLI, TFLint and trivy.

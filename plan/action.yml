@@ -1,4 +1,4 @@
-﻿name: 'Terraform plan'
+name: 'Terraform plan'
 description: >-
   Runs the Terraform plan command in the given infrastructure directory and displays the plan output as a pull request
   comment. This includes the installation of the Terraform CLI.
