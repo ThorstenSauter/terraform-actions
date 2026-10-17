@@ -2,8 +2,10 @@
 
 ## Behavior
 
-This action installs the Terraform CLI with either the given or the `latest` version by default. It then executes the
-`plan` command in the given infrastructure directory.
+This action installs the Terraform CLI in the version given by the `terraform-version` input. Without it, the version
+in a `.terraform-version` file at the repository root is used, falling back to `latest` if there is none.
+
+It then executes the `plan` command in the given infrastructure directory.
 
 ## Example usage
 

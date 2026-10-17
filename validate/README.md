@@ -2,8 +2,10 @@
 
 ## Behavior
 
-This action installs the Terraform CLI with either the given or the `latest` version by default. It then checks the
-following items for the Terraform configuration files in the given infrastructure directory:
+This action installs the Terraform CLI in the version given by the `terraform-version` input. Without it, the version
+in a `.terraform-version` file at the repository root is used, falling back to `latest` if there is none.
+
+It then checks the following items for the Terraform configuration files in the given infrastructure directory:
 
 - File formatting using `terraform fmt`
 - Validation using `terraform validate` (preceded by `terraform init -backend=false`, so no backend credentials are
@@ -35,15 +37,12 @@ jobs:
   validate:
     name: Terraform validate
     runs-on: ubuntu-latest
-    env:
-      TERRAFORM_VERSION: '~> 1.10.0'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Terraform validate
         uses: ThorstenSauter/terraform-actions/validate@v1
         with:
-          terraform-version: ${{ env.TERRAFORM_VERSION }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           infra-directory: ${{ vars.INFRA_DIRECTORY }}
 ```

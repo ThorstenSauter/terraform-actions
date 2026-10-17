@@ -6,8 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A set of reusable **composite** GitHub Actions for Terraform, consumed by other repos as
 `ThorstenSauter/terraform-actions/<action>@v1`. Each top-level directory (`init/`, `validate/`, `plan/`, `plan-workspaces/`, `apply/`) is one
-action: an `action.yml` plus a `README.md` with usage docs. There is no build, test suite, or CI workflow in this repo;
-changes are verified by running the actions from a consuming repository.
+action: an `action.yml` plus a `README.md` with usage docs. There is no build. CI
+(`.github/workflows/ci.yml`) lints workflows and actions with actionlint and zizmor and self-tests `validate` against
+`tests/fixture`. `init`, `plan` and `apply` need an Azure backend, so they are still verified by running them from a
+consuming repository.
 
 ## Shared assumptions across actions
 
@@ -16,8 +18,9 @@ changes are verified by running the actions from a consuming repository.
 - Authentication is OIDC via Entra ID; callers must set `ARM_CLIENT_ID`, `ARM_SUBSCRIPTION_ID`, `ARM_TENANT_ID`,
   `ARM_USE_AZUREAD=true`, `ARM_USE_OIDC=true`. The actions do not take Terraform variables as inputs — callers use
   `TF_VAR_*` env vars.
-- Every action installs Terraform itself via `hashicorp/setup-terraform` (`terraform-version` input, default `latest`)
-  and runs Terraform steps with `TF_IN_AUTOMATION: true`, `-input=false`, and `working-directory: inputs.infra-directory`.
+- Every action installs Terraform itself via `hashicorp/setup-terraform` (`terraform-version` input). When
+  the input is empty, a `Resolve Terraform version` step (duplicated in every action) falls back to `.terraform-version`
+  at the repository root, then to `latest`. Terraform steps run with `TF_IN_AUTOMATION: true`, `-input=false`, and `working-directory: inputs.infra-directory`.
 
 ## Structure worth knowing before editing
 

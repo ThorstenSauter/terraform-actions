@@ -1,4 +1,4 @@
-﻿name: 'Terraform init'
+name: 'Terraform init'
 description: >-
   Runs the Terraform init command in the given infrastructure directory. This includes the installation of the Terraform CLI.
 inputs:
@@ -18,9 +18,11 @@ inputs:
     description: 'The path to the Terraform source directory.'
     required: true
   terraform-version:
-    description: 'The version of Terraform to install. Defaults to latest.'
+    description: >-
+      The version of Terraform to install. Defaults to the version in a .terraform-version file at the repository
+      root, or latest if there is none.
     required: false
-    default: 'latest'
+    default: ''
   lock-timeout:
     description: >-
       The duration Terraform will wait to acquire a state lock during an init.
@@ -32,10 +34,25 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Resolve Terraform version
+      id: terraform-version
+      env:
+        TERRAFORM_VERSION: ${{ inputs.terraform-version }}
+      shell: bash
+      run: |
+        if [[ -n "$TERRAFORM_VERSION" ]]; then
+          version="$TERRAFORM_VERSION"
+        elif [[ -s .terraform-version ]]; then
+          version="$(tr -d '[:space:]' < .terraform-version)"
+        else
+          version=latest
+        fi
+        echo "Using Terraform version $version"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
       with:
-        terraform_version: ${{ inputs.terraform-version }}
+        terraform_version: ${{ steps.terraform-version.outputs.version }}
         terraform_wrapper: false
     - name: Terraform init
       id: init

@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint workflows and actions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run actionlint
+        uses: docker://rhysd/actionlint:1.7.12
+        with:
+          args: -color
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          advanced-security: false
+
+  self-test-validate:
+    name: Self-test validate (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # The validate action posts its result as a pull request comment
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: version file
+            version-file: '1.10.5'
+            version-input: ''
+            expected: '1.10.5'
+          - name: input overrides version file
+            version-file: '1.10.5'
+            version-input: '1.11.4'
+            expected: '1.11.4'
+          - name: latest fallback
+            version-file: ''
+            version-input: ''
+            expected: 'latest'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Write .terraform-version
+        if: matrix.version-file != ''
+        env:
+          VERSION_FILE: ${{ matrix.version-file }}
+        run: echo "$VERSION_FILE" > .terraform-version
+      - name: Terraform validate
+        uses: ./validate
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          infra-directory: tests/fixture
+          terraform-version: ${{ matrix.version-input }}
+      - name: Verify installed Terraform version
+        env:
+          EXPECTED: ${{ matrix.expected }}
+        run: |
+          if [[ "$EXPECTED" == latest ]]; then
+            EXPECTED="$(curl -fsSL https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r .current_version)"
+          fi
+          actual="$(terraform version -json | jq -r .terraform_version)"
+          echo "Expected Terraform $EXPECTED, got $actual"
+          test "$actual" = "$EXPECTED"
+
+  checks-passed:
+    name: CI passed
+    runs-on: ubuntu-slim
+    needs: [ lint, self-test-validate ]
+    if: always()
+    timeout-minutes: 5
+    steps:
+      - name: Fail if a check failed or was cancelled
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "::error::At least one check failed, was cancelled or was skipped."
+          echo "$RESULTS"
+          exit 1
+      - name: All checks passed
+        run: echo "Every check passed."
