@@ -58,4 +58,5 @@ consuming repository.
   move `v1` but blocks deleting it. A new major version needs adding to both rulesets.
 - When adding/changing inputs, update the action's `README.md` (and the root `README.md` example if relevant).
 - YAML/JSON/Markdown use 2-space indent (`.editorconfig`); `.yml`/`.md` files use LF line endings (`.gitattributes`).
-  Existing `action.yml`/`README.md` files start with a UTF-8 BOM.
+  Existing `README.md` files start with a UTF-8 BOM; `action.yml` files must not, because zizmor can't parse them with
+  one and silently skips them.
