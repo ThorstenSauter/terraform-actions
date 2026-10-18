@@ -35,6 +35,13 @@ inputs:
       Defaults to 10m.
     required: false
     default: '10m'
+  lock:
+    description: >-
+      Whether the plans hold the state lock. Set it to false for plans on pull requests, so that plans starting at the
+      same moment can't fail on each other's lock. A plan doesn't write state, but without the lock it can read state
+      while an apply is changing it. Defaults to true.
+    required: false
+    default: 'true'
 
 runs:
   using: 'composite'
@@ -118,6 +125,7 @@ runs:
     - name: Terraform plan
       env:
         TF_IN_AUTOMATION: true
+        LOCK: ${{ inputs.lock }}
         LOCK_TIMEOUT: ${{ inputs.lock-timeout }}
         OUT_DIR: ${{ steps.workspaces.outputs.out-dir }}
       shell: bash
@@ -127,7 +135,7 @@ runs:
         index=0
         while IFS=$'\t' read -r directory state_file environment_name; do
           (
-            terraform -chdir="$directory" plan -no-color -input=false -lock-timeout="$LOCK_TIMEOUT" \
+            terraform -chdir="$directory" plan -no-color -input=false -lock="$LOCK" -lock-timeout="$LOCK_TIMEOUT" \
               > "$OUT_DIR/$index.txt" 2>&1
             echo $? > "$OUT_DIR/$index.rc"
           ) &

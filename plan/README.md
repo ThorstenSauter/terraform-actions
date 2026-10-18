@@ -7,6 +7,11 @@ in a `.terraform-version` file at the repository root is used, falling back to `
 
 It then executes the `plan` command in the given infrastructure directory.
 
+The plan holds the state lock by default. On pull requests, set `lock: false`: with the `azurerm` backend, two plans
+that start at the same moment can fail on each other's lock even with `lock-timeout`. A plan doesn't write state, so it
+doesn't need the lock, but it can then read state while an apply is changing it and show changes that apply is about to
+make. Keep the lock for anything that writes state, such as `apply -refresh-only`.
+
 ## Example usage
 
 ```yaml
@@ -46,4 +51,5 @@ jobs:
           storage-account: ${{ vars.TF_BACKEND_STORAGE_ACCOUNT_NAME }}
           container: ${{ vars.TF_BACKEND_STATE_CONTAINER_NAME }}
           state-file: ${{ vars.TF_BACKEND_STATE_FILE_NAME }}
+          lock: false
 ```

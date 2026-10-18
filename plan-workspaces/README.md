@@ -18,6 +18,8 @@ credentials. Instead of one job per workspace, one job plans all of them:
 - The plans run in parallel. Each workspace's output is printed in its own log group once all plans have finished.
 - A failed plan does not stop the others. Every workspace gets its comment, and the action fails at the end if any plan
   failed.
+- The plans hold the state lock by default. On pull requests, set `lock: false`, for the reasons described in the
+  [Plan](../plan) action.
 
 Workspaces share the job's environment, so `TF_VAR_*` variables apply to all of them. Terraform ignores a `TF_VAR_*`
 variable a workspace does not declare.
@@ -69,6 +71,7 @@ jobs:
           resource-group: ${{ vars.TF_BACKEND_RESOURCE_GROUP_NAME }}
           storage-account: ${{ vars.TF_BACKEND_STORAGE_ACCOUNT_NAME }}
           container: ${{ vars.TF_BACKEND_STATE_CONTAINER_NAME }}
+          lock: false
           workspaces: |
             infra/foundation production-foundation.tfstate production-foundation
             infra/apps       production.tfstate            production

@@ -69,6 +69,7 @@ jobs:
           storage-account: ${{ vars.TF_BACKEND_STORAGE_ACCOUNT_NAME }}
           container: ${{ vars.TF_BACKEND_STATE_CONTAINER_NAME }}
           state-file: ${{ vars.TF_BACKEND_STATE_FILE_NAME }}
+          lock: false
 ```
 
 ## Actions
