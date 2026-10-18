@@ -18,6 +18,8 @@ credentials. Instead of one job per workspace, one job plans all of them:
 - The plans run in parallel. Each workspace's output is printed in its own log group once all plans have finished.
 - A failed plan does not stop the others. Every workspace gets its comment, and the action fails at the end if any plan
   failed.
+- The plans run without the state lock unless `lock` is set to `true`, for the reasons described in the
+  [Plan](../plan) action.
 
 Workspaces share the job's environment, so `TF_VAR_*` variables apply to all of them. Terraform ignores a `TF_VAR_*`
 variable a workspace does not declare.

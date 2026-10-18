@@ -30,11 +30,18 @@ inputs:
     default: ''
   lock-timeout:
     description: >-
-      The duration Terraform will wait to acquire a state lock during an init or plan.
+      The duration Terraform will wait to acquire a state lock during an init, or a plan with lock set to true.
       The format has to follow the Terraform CLIs requirement of a number followed by a unit.
       Defaults to 10m.
     required: false
     default: '10m'
+  lock:
+    description: >-
+      Whether the plans hold the state lock. Defaults to false, so that plans on pull requests starting at the
+      same moment can't fail on each other's lock. A plan doesn't write state, but without the lock it can read state
+      while an apply is changing it. Set it to true to hold the lock.
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -118,6 +125,7 @@ runs:
     - name: Terraform plan
       env:
         TF_IN_AUTOMATION: true
+        LOCK: ${{ inputs.lock }}
         LOCK_TIMEOUT: ${{ inputs.lock-timeout }}
         OUT_DIR: ${{ steps.workspaces.outputs.out-dir }}
       shell: bash
@@ -127,7 +135,7 @@ runs:
         index=0
         while IFS=$'\t' read -r directory state_file environment_name; do
           (
-            terraform -chdir="$directory" plan -no-color -input=false -lock-timeout="$LOCK_TIMEOUT" \
+            terraform -chdir="$directory" plan -no-color -input=false -lock="$LOCK" -lock-timeout="$LOCK_TIMEOUT" \
               > "$OUT_DIR/$index.txt" 2>&1
             echo $? > "$OUT_DIR/$index.rc"
           ) &

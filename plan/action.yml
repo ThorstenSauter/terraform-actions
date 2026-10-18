@@ -32,11 +32,18 @@ inputs:
     default: ''
   lock-timeout:
     description: >-
-      The duration Terraform will wait to acquire a state lock during an init or plan.
+      The duration Terraform will wait to acquire a state lock during an init, or a plan with lock set to true.
       The format has to follow the Terraform CLIs requirement of a number followed by a unit.
       Defaults to 10m.
     required: false
     default: '10m'
+  lock:
+    description: >-
+      Whether the plan holds the state lock. Defaults to false, so that plans on pull requests starting at the
+      same moment can't fail on each other's lock. A plan doesn't write state, but without the lock it can read state
+      while an apply is changing it. Set it to true to hold the lock.
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -83,11 +90,12 @@ runs:
       id: plan
       env:
         TF_IN_AUTOMATION: true
+        LOCK: ${{ inputs.lock }}
         LOCK_TIMEOUT: ${{ inputs.lock-timeout }}
       shell: bash
       working-directory: ${{ inputs.infra-directory }}
       continue-on-error: true
-      run: terraform plan -no-color -input=false -lock-timeout="$LOCK_TIMEOUT"
+      run: terraform plan -no-color -input=false -lock="$LOCK" -lock-timeout="$LOCK_TIMEOUT"
     - name: Create or update PR comment
       uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
       if: github.event_name == 'pull_request'

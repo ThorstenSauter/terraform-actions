@@ -7,6 +7,11 @@ in a `.terraform-version` file at the repository root is used, falling back to `
 
 It then executes the `plan` command in the given infrastructure directory.
 
+The plan runs without the state lock (`-lock=false`) unless `lock` is set to `true`. With the `azurerm` backend, two
+plans that start at the same moment can fail on each other's lock even with `lock-timeout`, which happens when several
+pull requests are opened at once. A plan doesn't write state, so it doesn't need the lock. Without it, a plan can read
+state while an apply is changing it and show changes that apply is about to make.
+
 ## Example usage
 
 ```yaml
