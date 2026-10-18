@@ -30,18 +30,18 @@ inputs:
     default: ''
   lock-timeout:
     description: >-
-      The duration Terraform will wait to acquire a state lock during an init or plan.
+      The duration Terraform will wait to acquire a state lock during an init, or a plan with lock set to true.
       The format has to follow the Terraform CLIs requirement of a number followed by a unit.
       Defaults to 10m.
     required: false
     default: '10m'
   lock:
     description: >-
-      Whether the plans hold the state lock. Set it to false for plans on pull requests, so that plans starting at the
+      Whether the plans hold the state lock. Defaults to false, so that plans on pull requests starting at the
       same moment can't fail on each other's lock. A plan doesn't write state, but without the lock it can read state
-      while an apply is changing it. Defaults to true.
+      while an apply is changing it. Set it to true to hold the lock.
     required: false
-    default: 'true'
+    default: 'false'
 
 runs:
   using: 'composite'
