@@ -27,8 +27,9 @@ consuming repository.
 - **The `terraform init` step is duplicated** verbatim in `init/`, `plan/`, and `apply/` (composite actions don't
   reference each other here). Changes to init flags, `lock-timeout` handling, or `setup-terraform` config usually need
   to be applied to all three.
-- `plan/` is the only action that leaves the `setup-terraform` wrapper enabled (others set `terraform_wrapper: false`),
-  because it reads `steps.plan.outputs.stdout` to embed the plan in a PR comment.
+- Every action sets `terraform_wrapper: false`. `plan/` writes the plan output to a file under `$RUNNER_TEMP`, and the
+  comment step reads it from there. Don't pass plan output through `env:`: Linux limits a single environment variable
+  to 128 KiB, and a larger plan keeps the `github-script` step from starting.
 - `plan-workspaces/` plans several workspaces in one job: a `workspaces` input with one
   `<directory> <state-file> <environment-name>` line each replaces `infra-directory`/`state-file`/`environment-name`.
   It runs the inits one after another, sharing a `TF_PLUGIN_CACHE_DIR` (not safe for concurrent writes), then the plans
