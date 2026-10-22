@@ -15,7 +15,7 @@ concurrency:
 jobs:
   lint:
     name: Lint workflows and actions
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04-arm
     permissions:
       contents: read
     timeout-minutes: 10
@@ -35,7 +35,7 @@ jobs:
 
   self-test-validate:
     name: Self-test validate (${{ matrix.name }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04-arm
     permissions:
       contents: read
       pull-requests: write # The validate action posts its result as a pull request comment
@@ -85,7 +85,7 @@ jobs:
 
   checks-passed:
     name: CI passed
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-26.04-arm
     needs: [ lint, self-test-validate ]
     if: always()
     timeout-minutes: 5
