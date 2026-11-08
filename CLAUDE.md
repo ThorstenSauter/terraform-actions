@@ -49,9 +49,11 @@ consuming repository.
 
 - Never interpolate `${{ inputs.* }}` or step outputs directly into `run:` scripts or `github-script` code; map them to
   `env:` entries and reference `$VAR` / `process.env.VAR` instead.
-- Third-party actions are pinned to full commit SHAs with a trailing `# vX.Y.Z` comment. Renovate
-  (`.github/renovate.json`, extending `ThorstenSauter/renovate-config`) updates these — keep the same format so it keeps
-  working.
+- Third-party actions are referenced by full version tag (`@vX.Y.Z`), in workflows and in the action files alike.
+  `.github/workflows/actions.lock` locks the commits, and CI runs `validate` as `$/validate` so the lockfile covers the
+  actions it uses. Renovate (`.github/renovate.json`, extending `ThorstenSauter/renovate-config`) updates the tags and
+  regenerates the lockfile. After changing a `uses:` line by hand, run `gh actions-lock --migrate-local-actions` and
+  commit the lockfile.
 - Commit messages follow Conventional Commits (`feat:`, `fix:`, `chore(deps):`, `chore(docs):`).
 - Releases are published manually as GitHub releases with `v1.x.y` tags. `.github/workflows/release.yml` then moves
   the major tag `v1` that consumers reference to the release, unless it's a prerelease or not the highest release in that
