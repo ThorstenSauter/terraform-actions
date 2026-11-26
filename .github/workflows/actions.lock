@@ -9,7 +9,7 @@ workflows:
         - 'aquasecurity/trivy-action@v0.36.0'
         - 'hashicorp/setup-terraform@v4.0.1'
         - 'terraform-linters/setup-tflint@v6.3.2'
-        - 'zizmorcore/zizmor-action@v0.8.1'
+        - 'zizmorcore/zizmor-action@v0.9.1'
     '.github/workflows/release.yml': []
 dependencies:
     'actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae':
@@ -53,9 +53,9 @@ dependencies:
         uses:
             - 'actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae'
             - 'aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514'
-    'github/codeql-action@9b3254085494b55a0f7c4c2b3d2d52cc712ce370':
-        ref: 'v4.39.1'
-        commit: 'sha1-9b3254085494b55a0f7c4c2b3d2d52cc712ce370'
+    'github/codeql-action@33d7b85da1a04171e211befe2c739303b9a4c066':
+        ref: 'v4.39.3'
+        commit: 'sha1-33d7b85da1a04171e211befe2c739303b9a4c066'
         owner_id: 9919
         repo_id: 259445878
     'hashicorp/setup-terraform@v4.0.1':
@@ -68,10 +68,10 @@ dependencies:
         commit: 'sha1-6ffdbaa3be476b3431f7275c26966ef32ff60337'
         owner_id: 54197850
         repo_id: 281705852
-    'zizmorcore/zizmor-action@v0.8.1':
-        ref: 'v0.8.1'
-        commit: 'sha1-45d7276c9ca790aabd705e31ca99c6185c3e76dd'
+    'zizmorcore/zizmor-action@v0.9.1':
+        ref: 'v0.9.1'
+        commit: 'sha1-a818f16177a5395fc11d3c73577caabaa7119391'
         owner_id: 210636713
         repo_id: 985558803
         uses:
-            - 'github/codeql-action@9b3254085494b55a0f7c4c2b3d2d52cc712ce370'
+            - 'github/codeql-action@33d7b85da1a04171e211befe2c739303b9a4c066'
